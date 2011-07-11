@@ -1,0 +1,101 @@
+#!/bin/bash
+#                         _ 
+#                        | |
+#   _ __ ___   __ _ _   _| |
+#  | '_ ` _ \ / _` | | | | |
+#  | | | | | | (_| | |_| | |
+#  |_| |_| |_|\__,_|\__,_|_|
+#
+#  a mail workalike that works with Apple Mail
+#
+
+function comma_split {
+    echo "$@" | sed 's/,/ /'
+}
+
+# Process arguments
+while [ "$1" != "" ]; do
+
+    case $1 in
+        -s | --subject )     shift
+                             subject=$1
+                             ;;
+        -c | --cc-addr )     shift
+                             ccaddrs=$1
+                             ;;
+        -b | --bcc-addr )    shift
+                             bccaddrs=$1
+                             ;;
+        * )                  toaddrs="$1 $toaddrs"
+    esac
+    shift
+done
+
+# get addresses 
+ccaddrs=`comma_split $ccaddrs`
+bccaddrs=`comma_split $bccaddrs`
+toaddrs=`comma_split $toaddrs`
+
+# Read content
+if [ "$( tty )" == 'not a tty' ] ; then
+    content=`cat -`
+else
+    # get subject
+    if [ -z "$subject" ] ; then
+        read -p "Subject: " subject
+    fi
+
+    if [ -z "$content" ]; then
+        while true ; do
+            read line
+
+            if [ "$line" = "." ] ; then
+                break;
+            fi
+
+            if [ -z "$content" ] ; then
+                content="$line"
+            else
+                content="$content\n$line"
+            fi
+        done
+
+        echo EOT
+    fi
+fi
+
+# Use single space as subject to avoid "No Subject" message
+if [ -z "$subject" ]; then
+    subject=" "
+fi
+
+# Build applescript
+APPLESCRIPT="tell application \"Mail\"
+    set theMessage to make new outgoing message with properties {visible:false, subject: \"$subject\", content: \"$content\"}
+    tell theMessage\n"
+
+for toaddr in $toaddrs ; do
+    APPLESCRIPT="$APPLESCRIPT\nmake new to recipient at end of to recipients with properties {address:\"$toaddr\"}\n"
+done
+
+for ccaddr in $ccaddrs ; do
+    APPLESCRIPT="$APPLESCRIPT\nmake new cc recipient at end of to recipients with properties {address:\"$ccaddr\"}\n"
+done
+
+for bccaddr in $bccaddrs ; do
+    APPLESCRIPT="$APPLESCRIPT\nmake new bcc recipient at end of to recipients with properties {address:\"$bccaddr\"}\n"
+done
+
+APPLESCRIPT="$APPLESCRIPT
+    end tell
+    send theMessage
+end tell"
+
+asout=`printf "$APPLESCRIPT" | osascript`
+
+if [ "$asout" = "true" ] ; then
+    exit 0
+else
+    echo "$asout" 1>&2
+    exit 1
+fi
