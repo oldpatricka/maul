@@ -4,8 +4,8 @@
     | '_ ` _ \ / _` | | | | |
     | | | | | | (_| | |_| | |
     |_| |_| |_|\__,_|\__,_|_|
-
-a mail workalike that works with Apple Mail
+    
+    a mail workalike that works with Apple Mail
 
 
 ## Introduction
@@ -18,7 +18,7 @@ uses the accounts you already have set up in the standard Apple Mail client.
 
 ## Installation
 
-    curl -O https://raw.github.com/oldpatricka/Maul/master/maul && mv maul /usr/local/bin/ && chmod +x /usr/local/bin/maul
+    curl -O https://raw.github.com/oldpatricka/maul/master/maul && mv maul /usr/local/bin/ && chmod +x /usr/local/bin/maul
 
 ## Usage
 
