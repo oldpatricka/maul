@@ -13,6 +13,16 @@ function comma_split {
     echo "$@" | sed 's/,/ /'
 }
 
+function help {
+    echo "usage: $0 [--subject|-s subject] [--cc-addr|-c cc-addr] [--bcc-addr|-b bcc-addr] to-addr"
+    if [ -z "$1" ]; then
+        ret=0
+    else
+        ret=$1
+    fi
+    exit $ret
+}
+
 # Process arguments
 while [ "$1" != "" ]; do
 
@@ -26,6 +36,8 @@ while [ "$1" != "" ]; do
         -b | --bcc-addr )    shift
                              bccaddrs=$1
                              ;;
+        -h | --help )        help
+                             ;;
         * )                  toaddrs="$1 $toaddrs"
     esac
     shift
@@ -35,6 +47,12 @@ done
 ccaddrs=`comma_split $ccaddrs`
 bccaddrs=`comma_split $bccaddrs`
 toaddrs=`comma_split $toaddrs`
+
+if [ -z "$toaddrs" ]; then
+    echo "You need to specify at least one to address at the command line:" >&2
+    help 1
+fi
+
 
 # Read content
 if [ "$( tty )" == 'not a tty' ] ; then
